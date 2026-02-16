@@ -1,0 +1,125 @@
+import csv
+
+
+class SalesAnalyzer:
+    """
+    A class to analyze sales data from a CSV file.
+    
+    This class provides methods to load sales data, calculate total sales,
+    and identify the top-selling product by revenue.
+    """
+    
+    def __init__(self, filename):
+        """
+        Initialize the SalesAnalyzer with a CSV filename.
+        
+        Args:
+            filename (str): Path to the CSV file containing sales data.
+                           Expected columns: 'product_name', 'price', 'quantity'
+        """
+        self.filename = filename
+        self.data = []
+    
+    def load_data(self):
+        """
+        Load sales data from the CSV file.
+        
+        Reads the CSV file and populates the internal data structure.
+        Handles file not found errors and skips rows with invalid data.
+        
+        Returns:
+            bool: True if data was successfully loaded, False otherwise.
+        """
+        self.data = []
+        try:
+            with open(self.filename, mode='r') as file:
+                csv_reader = csv.DictReader(file)
+                for row in csv_reader:
+                    try:
+                        price = float(row['price'])
+                        quantity = int(row['quantity'])
+                        product = row['product_name']
+                        self.data.append({
+                            'product_name': product,
+                            'price': price,
+                            'quantity': quantity
+                        })
+                    except (ValueError, KeyError):
+                        print(f"Invalid data in row: {row}. Skipping this row.")
+            return True
+        except FileNotFoundError:
+            print(f"Error: The file '{self.filename}' was not found.")
+            return False
+    
+    def calculate_total_sales(self):
+        """
+        Calculate the total sales from all products.
+        
+        Computes the sum of (price * quantity) for all valid records in the data.
+        Requires load_data() to be called first.
+        
+        Returns:
+            float: Total sales amount, or None if no data is loaded.
+        """
+        if not self.data:
+            print("No data loaded. Call load_data() first.")
+            return None
+        
+        total = 0.0
+        for row in self.data:
+            total += row['price'] * row['quantity']
+        return total
+    
+    def find_top_product(self):
+        """
+        Find the top-selling product by total revenue.
+        
+        Identifies the product with the highest total revenue
+        (sum of price * quantity for all transactions).
+        Requires load_data() to be called first.
+        
+        Returns:
+            tuple: A tuple of (product_name, total_revenue) for the top product,
+                   or (None, None) if no data is available.
+        """
+        if not self.data:
+            print("No data loaded. Call load_data() first.")
+            return None, None
+        
+        product_revenue = {}
+        for row in self.data:
+            product = row['product_name']
+            revenue = row['price'] * row['quantity']
+            if product in product_revenue:
+                product_revenue[product] += revenue
+            else:
+                product_revenue[product] = revenue
+        
+        if not product_revenue:
+            return None, None
+        
+        top_product = max(product_revenue.items(), key=lambda x: x[1])
+        return top_product
+
+
+if __name__ == "__main__":
+    sales_data_file = 'sales_data.csv'
+    
+    # Instantiate the SalesAnalyzer class
+    analyzer = SalesAnalyzer(sales_data_file)
+    
+    # Load the data from the CSV file
+    if analyzer.load_data():
+        # Calculate and display total sales
+        total_sales = analyzer.calculate_total_sales()
+        if total_sales is not None:
+            print(f"Total sales from {sales_data_file}: ${total_sales:.2f}")
+        
+        # Find and display the top-selling product
+        product, revenue = analyzer.find_top_product()
+        if product is not None:
+            print(f"Top-selling product: {product}\nTotal revenue: ${revenue:.2f}")
+        else:
+            print("No valid product sales data found.")
+    else:
+        print("Failed to load sales data.")

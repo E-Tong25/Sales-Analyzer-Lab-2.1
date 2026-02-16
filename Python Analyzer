@@ -1,31 +1,58 @@
 import csv
 
 def calculate_total_sales(filename):
+    # This function reads a CSV file and calculates the total sales.
+    # It assumes the CSV has 'product_name', 'price', 'quantity' columns.
+    total = 0.0
+    try:
+        with open(filename, mode='r') as file:
+            csv_reader = csv.DictReader(file)
+            for row in csv_reader:
+                try:
+                    price = float(row['price'])
+                    quantity = int(row['quantity'])
+                    total += price * quantity
+                except ValueError:
+                    print(f"Invalid data in row: {row}. Skipping this row.")
+    except FileNotFoundError:
+        print(f"Error: The file '{filename}' was not found.")
+        return None
+    return total
 
-# This function reads a CSV file and calculates the total sales.
-
-# It assumes the CSV has 'product_name', 'price', 'quantity' columns.
-
-total = 0.0
-
-with open(filename, mode='r') as file:
-
-csv_reader = csv.DictReader(file)
-
-for row in csv_reader:
-
-price = float(row['price'])
-
-quantity = int(row['quantity'])
-
-total += price * quantity
-
-return total
+# New function to find the top-selling product by total revenue
+def find_top_selling_product(filename):
+    # Returns (product_name, total_revenue) for the top-selling product
+    product_revenue = {}
+    try:
+        with open(filename, mode='r') as file:
+            csv_reader = csv.DictReader(file)
+            for row in csv_reader:
+                try:
+                    product = row['product_name']
+                    price = float(row['price'])
+                    quantity = int(row['quantity'])
+                    revenue = price * quantity
+                    if product in product_revenue:
+                        product_revenue[product] += revenue
+                    else:
+                        product_revenue[product] = revenue
+                except ValueError:
+                    print(f"Invalid data in row: {row}. Skipping this row.")
+    except FileNotFoundError:
+        print(f"Error: The file '{filename}' was not found.")
+        return None, None
+    if not product_revenue:
+        return None, None
+    top_product = max(product_revenue.items(), key=lambda x: x[1])
+    return top_product
 
 if __name__ == "__main__":
+    sales_data_file = 'sales_data.csv'
+    total_sales = calculate_total_sales(sales_data_file)
+    print(f"Total sales from {sales_data_file}: ${total_sales:.2f}")
 
-sales_data_file = 'sales_data.csv'
-
-total_sales = calculate_total_sales(sales_data_file)
-
-print(f"Total sales from {sales_data_file}: ${total_sales:.2f}")
+    product, revenue = find_top_selling_product(sales_data_file)
+    if product is not None:
+        print(f"Top-selling product: {product}\nTotal revenue: ${revenue:.2f}")
+    else:
+        print("No valid product sales data found.")
